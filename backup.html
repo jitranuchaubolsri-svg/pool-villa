@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pool Villa - Backup & Restore</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 14px;
+    }
+    
+    .section {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .section:last-child {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+    
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    .btn {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    
+    .btn-primary {
+      background: #27ae60;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #229954;
+    }
+    
+    .btn-secondary {
+      background: #3498db;
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: #2980b9;
+    }
+    
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    
+    .status {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .status-value {
+      color: #27ae60;
+      font-weight: 600;
+    }
+    
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #3498db;
+      padding: 1.2rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #f39c12;
+      padding: 1.2rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 2rem;
+      color: #3498db;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .back-link:hover {
+      color: #2980b9;
+    }
+    
+    .log-box {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem;
+      height: 150px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #333;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <a href="index.html" class="back-link">← กลับไปหน้าแรก</a>
+  
+  <h1>💾 Backup & Restore Data</h1>
+  <p class="subtitle">เก็บข้อมูลบ้านให้ปลอดภัยและเรียกใช้ได้ตลอด</p>
+  
+  <!-- ส่วน Export -->
+  <div class="section">
+    <div class="section-title">📥 Export (ดาวน์โหลดข้อมูล)</div>
+    
+    <div class="info-box">
+      💡 ดาวน์โหลดข้อมูลทั้งหมด (ชื่อบ้าน, ราคา, รูป) เป็นไฟล์ JSON
+      เพื่อเก็บไว้ยาวๆ ได้ 20 ปี ถ้าต้องการเรียกใช้ใหม่ก็ Import กลับเข้ามา
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="exportJSON()">📥 Export JSON</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">📊 Export CSV</button>
+    </div>
+    
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">จำนวนบ้านที่มี:</span>
+        <span class="status-value" id="villaCount">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">วันที่ export:</span>
+        <span class="status-value" id="exportDate">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">ขนาดไฟล์:</span>
+        <span class="status-value" id="fileSize">-</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ส่วน Import -->
+  <div class="section">
+    <div class="section-title">📤 Import (อัพโหลดข้อมูล)</div>
+    
+    <div class="info-box">
+      💡 นำข้อมูลที่ export ไว้มาโหลดเข้าระบบใหม่ 
+      เลือกไฟล์ JSON ที่บันทึกไว้และคลิก Import
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+      <button class="btn btn-danger" onclick="clearData()">🗑️ Clear All Data</button>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".json" onchange="importJSON(event)">
+    
+    <div class="log-box" id="logBox">
+      📝 Log จะแสดงที่นี่...
+    </div>
+  </div>
+  
+  <!-- ส่วน สถานะ Sync -->
+  <div class="section">
+    <div class="section-title">🔗 Sync Status</div>
+    
+    <div class="warning-box">
+      ⚠️ Data ถูกเก็บใน Browser localStorage
+      ถ้า Clear Browser Cache ข้อมูลจะหาย!
+      ให้ Export ไฟล์บันทึกไว้เป็นประจำ
+    </div>
+    
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">สถานะการเชื่อมต่อ:</span>
+        <span class="status-value" id="syncStatus">✓ Connected</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Manager Portal:</span>
+        <span class="status-value">🟢 Online</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Customer Portal:</span>
+        <span class="status-value">🟢 Online</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let log = [];
+
+function addLog(msg) {
+  const timestamp = new Date().toLocaleTimeString('th-TH');
+  log.push(`[${timestamp}] ${msg}`);
+  document.getElementById('logBox').textContent = log.join('\n');
+  document.getElementById('logBox').scrollTop = document.getElementById('logBox').scrollHeight;
+}
+
+function updateStatus() {
+  const villas = JSON.parse(localStorage.getItem('sharedVillas') || '[]');
+  document.getElementById('villaCount').textContent = villas.length;
+  document.getElementById('exportDate').textContent = new Date().toLocaleString('th-TH');
+  document.getElementById('fileSize').textContent = (new Blob([JSON.stringify(villas)]).size / 1024).toFixed(2) + ' KB';
+}
+
+function exportJSON() {
+  const villas = JSON.parse(localStorage.getItem('sharedVillas') || '[]');
+  const dataStr = JSON.stringify(villas, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `pool_villa_backup_${new Date().getTime()}.json`;
+  link.click();
+  addLog(`✓ Export JSON สำเร็จ (${villas.length} บ้าน)`);
+  updateStatus();
+}
+
+function exportCSV() {
+  const villas = JSON.parse(localStorage.getItem('sharedVillas') || '[]');
+  const csv = ['ID,Name,Location,Beds,Zone,Price,CustomerPrice,Link'];
+  villas.forEach(v => {
+    csv.push(`${v.id},"${v.name}","${v.location}",${v.beds},${v.zone},${v.price},${v.customerPrice},"${v.link}"`);
+  });
+  const dataBlob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `pool_villa_backup_${new Date().getTime()}.csv`;
+  link.click();
+  addLog(`✓ Export CSV สำเร็จ (${villas.length} บ้าน)`);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const villas = JSON.parse(e.target.result);
+      if (!Array.isArray(villas)) throw new Error('ไฟล์ไม่ถูกต้อง');
+      localStorage.setItem('sharedVillas', JSON.stringify(villas));
+      addLog(`✓ Import สำเร็จ (${villas.length} บ้าน) - รีเฟรชหน้า Manager/Customer`);
+      updateStatus();
+      document.getElementById('fileInput').value = '';
+    } catch (error) {
+      addLog(`✗ Import ผิดพลาด: ${error.message}`);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearData() {
+  if (confirm('⚠️ ยืนยันการลบข้อมูลทั้งหมด? (ไม่สามารถกู้คืนได้)')) {
+    localStorage.removeItem('sharedVillas');
+    addLog('✓ ลบข้อมูลสำเร็จ');
+    updateStatus();
+  }
+}
+
+// Initialize
+updateStatus();
+addLog('💾 Backup & Restore System Ready');
+</script>
+
+</body>
+</html>
