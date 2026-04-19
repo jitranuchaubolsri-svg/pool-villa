@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tiewnaide Manager - Safe Import</title>
+  <title>Tiewnaide Manager - Pro Version</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; color: #333; }
-    .header { background: #1a3a3a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .header { background: #1a3a3a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     .filter-bar { background: white; padding: 15px 2rem; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
     .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -23,7 +23,7 @@
     .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
     .form-row { margin-bottom: 15px; }
     .form-label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-    .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+    .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
     .preview-box { text-align: center; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 2px dashed #ddd; margin-bottom: 15px; }
   </style>
 </head>
@@ -32,7 +32,7 @@
 <div class="header">
   <h1>🏠 Tiewnaide Manager</h1>
   <div>
-    <button class="btn btn-import" onclick="importVillas()">🚀 นำเข้าข้อมูล CSV (105 หลัง)</button>
+    <button class="btn btn-import" onclick="startSafeImport()">🚀 นำเข้าข้อมูล (105 หลัง)</button>
     <button class="btn btn-add" onclick="openAdd()">+ เพิ่มบ้านใหม่</button>
   </div>
 </div>
@@ -54,7 +54,7 @@
     <option value="4">4 ห้องนอน</option>
     <option value="5">5 ห้องนอนขึ้นไป</option>
   </select>
-  <div id="status" style="margin-left: auto; font-weight: bold; color: #27ae60;">✅ ระบบพร้อมใช้งาน</div>
+  <div id="status" style="margin-left: auto; font-weight: bold; color: #27ae60;">🔄 กำลังเชื่อมต่อฐานข้อมูล...</div>
 </div>
 
 <div class="container">
@@ -74,152 +74,4 @@
     authDomain: "pool-villa-sync.firebaseapp.com",
     projectId: "pool-villa-sync",
     storageBucket: "pool-villa-sync.firebasestorage.app",
-    messagingSenderId: "82378845389",
-    appId: "1:82378845389:web:2dbd9d153cf74cf0a78d84"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  let villas = [];
-  let tempImage = null;
-
-  // ข้อมูล 105 หลังที่นิวเตรียมไว้ให้คุณนิวครับ
-  const villaData = [
-    {"id": "DV-1548", "name": "Double Fun Pool villa💦", "zone": "บางเสร่", "beds": 8, "link": "https://www.devillegroups.com/v/1548/", "customerPrice": 0, "image": null},
-    {"id": "DV-1945", "name": "Fun Beach Pool Villa💦", "zone": "บางเสร่", "beds": 5, "link": "https://www.pattayapartypoolvilla.com/v/1945/", "customerPrice": 0, "image": null},
-    {"id": "DV-2224", "name": "Sea Of Fun Pool Villa💦", "zone": "บางเสร่", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2224", "customerPrice": 0, "image": null},
-    {"id": "DV-2322", "name": "Ocean Fun Pool Villa💦", "zone": "บางเสร่", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2322/", "customerPrice": 0, "image": null},
-    {"id": "DV-1562", "name": "บ้านพัก DV-1562", "zone": "บางเสร่", "beds": 2, "link": "https://www.pattayapartypoolvilla.com/v/1562/", "customerPrice": 0, "image": null},
-    {"id": "DV-1152", "name": "บ้านพัก DV-1152", "zone": "บางเสร่", "beds": 2, "link": "https://www.pattayapartypoolvilla.com/v/1152/", "customerPrice": 0, "image": null},
-    {"id": "DV-1151", "name": "บ้านพัก DV-1151", "zone": "บางเสร่", "beds": 2, "link": "https://www.pattayapartypoolvilla.com/v/1151/", "customerPrice": 0, "image": null},
-    {"id": "DV-1550", "name": "บ้านพัก DV-1550", "zone": "บางเสร่", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/1550/", "customerPrice": 0, "image": null},
-    {"id": "DV-1538", "name": "บ้านพัก DV-1538", "zone": "บางเสร่", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/1538/", "customerPrice": 0, "image": null},
-    {"id": "DV-2305", "name": "บ้านพัก DV-2305", "zone": "บางเสร่", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/2305/", "customerPrice": 0, "image": null},
-    {"id": "DV-2399", "name": "บ้านพัก DV-2399", "zone": "บางเสร่", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/2399", "customerPrice": 0, "image": null},
-    {"id": "DV-2307", "name": "Cha Cha 1", "zone": "บางเสร่", "beds": 6, "link": "https://www.pattayapartypoolvilla.com/v/2307", "customerPrice": 0, "image": null},
-    {"id": "DV-2337", "name": "Cha Cha 2", "zone": "บางเสร่", "beds": 2, "link": "https://www.pattayapartypoolvilla.com/v/2337", "customerPrice": 0, "image": null},
-    {"id": "DV-2340", "name": "Cha Cha 3", "zone": "บางเสร่", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2340", "customerPrice": 0, "image": null},
-    {"id": "DV-2342", "name": "Cha Cha 4", "zone": "บางเสร่", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2342", "customerPrice": 0, "image": null},
-    {"id": "DV-2341", "name": "Cha Cha 5", "zone": "บางเสร่", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2341", "customerPrice": 0, "image": null},
-    {"id": "DV-2810", "name": "บ้านพัก DV-2810", "zone": "บ้านอำเภอ", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/2810", "customerPrice": 0, "image": null},
-    {"id": "DV-2812", "name": "บ้านพัก DV-2812", "zone": "บ้านอำเภอ", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/2812", "customerPrice": 0, "image": null},
-    {"id": "DV-2696", "name": "🫧Cave house🌴✨", "zone": "บ้านอำเภอ", "beds": 7, "link": "https://www.pattayapartypoolvilla.com/v/2696/", "customerPrice": 0, "image": null},
-    {"id": "DV-2666", "name": "🫧Classy house🌲✨", "zone": "บ้านอำเภอ", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/1576/2666/", "customerPrice": 0, "image": null},
-    {"id": "DV-2750", "name": "🫧Crop house⛰️✨", "zone": "บ้านอำเภอ", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/2750", "customerPrice": 0, "image": null},
-    {"id": "DV-3032", "name": "Sunshine 3 (44)", "zone": "บ้านอำเภอ", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/3032", "customerPrice": 0, "image": null},
-    {"id": "DV-3028", "name": "Sunshine 4 (42)", "zone": "บ้านอำเภอ", "beds": 4, "link": "https://www.pattayapartypoolvilla.com/v/3028", "customerPrice": 0, "image": null},
-    {"id": "DV-3041", "name": "Sunshine 5(40)", "zone": "บ้านอำเภอ", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/3041", "customerPrice": 0, "image": null},
-    {"id": "DV-2234", "name": "Sunshine 6(Moon Roxy)", "zone": "บ้านอำเภอ", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/2234/", "customerPrice": 0, "image": null},
-    {"id": "DV-3062", "name": "Sunshine 7 (A98)", "zone": "บ้านอำเภอ", "beds": 3, "link": "https://www.pattayapartypoolvilla.com/v/3062", "customerPrice": 0, "image": null}
-    /* ...ระบบจะวนลูปนำเข้าข้อมูลทั้งหมดให้เองครับ... */
-  ];
-
-  db.collection("villas").onSnapshot((snapshot) => {
-    villas = [];
-    snapshot.forEach(doc => villas.push(doc.data()));
-    document.getElementById('status').textContent = `✅ ออนไลน์ (${villas.length} หลัง)`;
-    render();
-  });
-
-  async function importVillas() {
-    if(!confirm("จะเริ่มนำเข้าบ้านใหม่ 105 หลัง (ไม่เขียนทับบ้านเดิมที่คุณนิวแต่งไว้แล้ว) ตกลงไหมครับ?")) return;
-    
-    const statusEl = document.getElementById('status');
-    let added = 0;
-    let skipped = 0;
-
-    statusEl.textContent = "⏳ กำลังเริ่มนำเข้า... โปรดรอสักครู่";
-
-    for(let item of villaData) {
-      const docRef = db.collection("villas").doc(item.id);
-      const snap = await docRef.get();
-      
-      if(!snap.exists) {
-        await docRef.set(item);
-        added++;
-      } else {
-        skipped++;
-      }
-      statusEl.textContent = `⏳ กำลังนำเข้า: สำเร็จ ${added} / ข้าม ${skipped}`;
-    }
-    
-    alert(`🎉 เสร็จเรียบร้อย!\n- เพิ่มบ้านใหม่: ${added} หลัง\n- ข้ามบ้านเดิม: ${skipped} หลัง`);
-    statusEl.textContent = `✅ อัปเดตข้อมูลสำเร็จ (เพิ่มใหม่ ${added})`;
-  }
-
-  function render() {
-    const grid = document.getElementById('grid');
-    const fZone = document.getElementById('filterZone').value;
-    const fBeds = document.getElementById('filterBeds').value;
-    grid.innerHTML = '';
-    
-    const filtered = villas.filter(v => {
-      const matchZone = fZone === 'ทั้งหมด' || v.zone === fZone;
-      const vBeds = parseInt(v.beds) || 0;
-      const matchBeds = fBeds === 'ทั้งหมด' || (fBeds === '5' ? (vBeds >= 5) : (vBeds == parseInt(fBeds)));
-      return matchZone && matchBeds;
-    });
-
-    filtered.forEach(v => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <img src="${v.image || 'https://via.placeholder.com/300x180?text=No+Image'}" class="card-img">
-        <div style="font-weight:bold; font-size:18px;">${v.name || 'ไม่มีชื่อ'}</div>
-        <div style="font-size:13px; color:#666; margin-bottom:10px;">ID: ${v.id} | ${v.zone} | ${v.beds} ห้องนอน</div>
-        <div style="color:#e74c3c; font-weight:bold;">ราคา: ${Number(v.customerPrice || 0).toLocaleString()} ฿</div>
-        <div style="display:flex; gap:8px; margin-top:15px;">
-          <button class="btn btn-edit" onclick="openEdit('${v.id}')">✏️ แก้ไข / ใส่รูป-Link</button>
-          <button class="btn btn-delete" onclick="deleteVilla('${v.id}')">🗑️</button>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  }
-
-  function openAdd() {
-    const newId = "DV-" + Math.floor(1000 + Math.random() * 9000);
-    showModal({id: newId, name: '', zone: 'พัทยา', link: '', customerPrice: 0, beds: 3, image: null}, true);
-  }
-
-  function openEdit(id) {
-    const v = villas.find(x => x.id === id);
-    if (v) showModal(v, false);
-  }
-
-  function showModal(v, isAdd) {
-    tempImage = v.image;
-    const content = document.getElementById('formContent');
-    content.innerHTML = `
-      <h2 style="margin-bottom:20px;">${isAdd ? '➕ เพิ่มวิลล่า' : '✏️ แก้ไขข้อมูล'}</h2>
-      <div class="preview-box">
-        <div id="pImg">${tempImage ? `<img src="${tempImage}" style="width:100%; max-height:150px; object-fit:cover; border-radius:5px;">` : '🏠 ไม่มีรูปภาพ'}</div>
-        <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
-          <button class="btn" style="background:#3498db; color:white; font-size:12px;" onclick="document.getElementById('fileIn').click()">📸 เลือกรูป</button>
-          <button class="btn" style="background:#95a5a6; color:white; font-size:12px;" onclick="removeImg()">🗑️ ลบรูป</button>
-        </div>
-        <input type="file" id="fileIn" style="display:none" accept="image/*" onchange="handleFile(this)">
-      </div>
-      <div class="form-row"><label class="form-label">ชื่อบ้านพัก</label><input id="fName" class="form-input" value="${v.name || ''}"></div>
-      <div class="form-row"><label class="form-label">โซน</label>
-        <select id="fZone" class="form-input">
-          <option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option>
-          <option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option>
-          <option value="บ้านอำเภอ" ${v.zone==='บ้านอำเภอ'?'selected':''}>บ้านอำเภอ</option>
-        </select>
-      </div>
-      <div class="form-row"><label class="form-label">🛏️ จำนวนห้องนอน</label><input id="fBeds" type="number" class="form-input" value="${v.beds || 3}"></div>
-      <div class="form-row"><label class="form-label">🔗 Link</label><input id="fLink" class="form-input" value="${v.link || ''}" placeholder="แปะลิงก์ที่นี่"></div>
-      <div class="form-row"><label class="form-label">💰 ราคาขาย (หน้าเว็บ)</label><input id="fPrice" type="number" class="form-input" value="${v.customerPrice || 0}"></div>
-      <button class="btn" style="width:100%; background:#27ae60; color:white; padding:15px; font-size:16px;" onclick="saveVilla('${v.id}')">💾 บันทึกข้อมูล</button>
-      <button class="btn" style="width:100%; margin-top:10px;" onclick="closeModal()">ยกเลิก</button>
-    `;
-    document.getElementById('editModal').classList.add('show');
-  }
-
-  function handleFile(input) {
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      tempImage = e.target.result;
-      document.getElementById('pImg').innerHTML = `<img src
+    messagingSenderId: "823
