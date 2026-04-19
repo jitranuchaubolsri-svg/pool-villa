@@ -3,123 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>เที่ยวไหนดี พูลวิลล่า - ค้นหาบ้านพักพัทยา บางเสร่</title>
+  <title>Tiewnaide Manager - Fixed</title>
   <style>
-    /* ดีไซน์สำหรับลูกค้า: เน้นความสวยงามและราคาชัดเจน */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f8fafc; color: #334155; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; color: #333; }
+    .header { background: #1a3a3a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .filter-bar { background: white; padding: 15px 2rem; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; display: flex; flex-direction: column; }
+    .card-img { width: 100%; height: 180px; background: #eee; border-radius: 8px; object-fit: cover; margin-bottom: 12px; }
+    .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    .btn-add { background: #27ae60; color: white; padding: 10px 20px; }
+    .btn-import { background: #e67e22; color: white; padding: 10px 20px; margin-left: 10px; }
+    .btn-edit { background: #2980b9; color: white; flex: 1; }
+    .btn-delete { background: #e74c3c; color: white; width: 45px; }
     
-    .header { background: linear-gradient(135deg, #1a3a3a 0%, #2d5a5a 100%); color: white; padding: 3rem 1.5rem; text-align: center; }
-    .header h1 { font-size: 32px; font-weight: 800; }
-    
-    .filter-bar { background: white; padding: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-    .filter-select { padding: 12px 20px; border: 1.5px solid #e2e8f0; border-radius: 50px; outline: none; background: #fff; cursor: pointer; font-weight: 600; color: #1e293b; }
-
-    .container { max-width: 1300px; margin: 40px auto; padding: 0 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
-    
-    .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
-    .card-img { width: 100%; height: 220px; object-fit: cover; background: #f1f5f9; }
-    
-    .price-badge { position: absolute; top: 20px; right: 20px; background: #e74c3c; color: white; padding: 8px 15px; border-radius: 30px; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-    .card-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-    .card-title { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
-    .card-meta { display: flex; gap: 15px; font-size: 14px; color: #64748b; margin-bottom: 20px; }
-
-    .price-section { margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .price-value { color: #e11d48; font-size: 28px; font-weight: 900; }
-    
-    .btn-details { display: block; width: 100%; padding: 15px; background: #1a3a3a; color: white; text-align: center; text-decoration: none; border-radius: 12px; font-weight: 700; margin-top: 20px; transition: 0.3s; }
-    .btn-details:hover { background: #2d5a5a; }
-    
-    #status-msg { text-align: center; margin-bottom: 30px; font-weight: 700; color: #059669; }
+    /* Modal Setup */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .form-row { margin-bottom: 15px; }
+    .form-label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+    .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+    .preview-box { text-align: center; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 2px dashed #ddd; margin-bottom: 15px; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🏖️ เที่ยวไหนดี พูลวิลล่า</h1>
-  <p>จองพูลวิลล่าพัทยา-บางเสร่ ราคาดีที่สุดสำหรับคุณ</p>
+  <h1>🏠 Tiewnaide Manager</h1>
+  <div>
+    <button class="btn btn-import" onclick="startSafeImport()">🚀 นำเข้าข้อมูล CSV</button>
+    <button class="btn btn-add" onclick="openAdd()">+ เพิ่มบ้านใหม่</button>
+  </div>
 </div>
 
 <div class="filter-bar">
-  <select id="filterZone" class="filter-select" onchange="render()">
-    <option value="ทั้งหมด">📍 ทุกโซน</option>
+  <span>🔍 โซน:</span>
+  <select id="filterZone" style="padding:8px; border-radius:5px;" onchange="render()">
+    <option value="ทั้งหมด">ทั้งหมด</option>
     <option value="พัทยา">พัทยา</option>
     <option value="บางเสร่">บางเสร่</option>
+    <option value="บ้านอำเภอ">บ้านอำเภอ</option>
   </select>
-  <select id="filterBeds" class="filter-select" onchange="render()">
-    <option value="ทั้งหมด">🛏️ ทุกขนาดห้องนอน</option>
+  <span>🛏️ ห้องนอน:</span>
+  <select id="filterBeds" style="padding:8px; border-radius:5px;" onchange="render()">
+    <option value="ทั้งหมด">ทั้งหมด</option>
     <option value="1">1 ห้องนอน</option>
     <option value="2">2 ห้องนอน</option>
     <option value="3">3 ห้องนอน</option>
     <option value="4">4 ห้องนอน</option>
     <option value="5">5 ห้องนอนขึ้นไป</option>
   </select>
+  <div id="status" style="margin-left: auto; font-weight: bold; color: #27ae60;">✅ ระบบพร้อมใช้งาน</div>
 </div>
 
 <div class="container">
-  <div id="status-msg">🔄 กำลังโหลดข้อมูล...</div>
   <div class="grid" id="grid"></div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<div class="modal" id="editModal">
+  <div class="modal-content" id="formContent"></div>
+</div>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAuI0m2sRMiyPsWeLZymklmku4DjyH-Etk",
-    authDomain: "pool-villa-sync.firebaseapp.com",
-    projectId: "pool-villa-sync",
-    storageBucket: "pool-villa-sync.firebasestorage.app",
-    messagingSenderId: "82378845389",
-    appId: "1:82378845389:web:2dbd9d153cf74cf0a78d84"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  let villas = [];
-
-  db.collection("villas").onSnapshot((snapshot) => {
-    villas = [];
-    snapshot.forEach(doc => villas.push(doc.data()));
-    document.getElementById('status-msg').textContent = `✨ มีบ้านว่างทั้งหมด ${villas.length} หลัง`;
-    render();
-  });
-
-  function render() {
-    const grid = document.getElementById('grid');
-    const fZone = document.getElementById('filterZone').value;
-    const fBeds = document.getElementById('filterBeds').value;
-    grid.innerHTML = '';
-    
-    const filtered = villas.filter(v => {
-      const matchZone = (fZone === 'ทั้งหมด') || (v.zone === fZone);
-      const vBeds = parseInt(v.beds) || 0;
-      const matchBeds = (fBeds === 'ทั้งหมด') || (fBeds === '5' ? (vBeds >= 5) : (vBeds == parseInt(fBeds)));
-      return matchZone && matchBeds;
-    });
-
-    filtered.forEach(v => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const displayPrice = Number(v.customerPrice || 0).toLocaleString();
-      card.innerHTML = `
-        <div class="price-badge">${displayPrice}.-</div>
-        <img src="${v.image || 'https://via.placeholder.com/500x350?text=Tiewnaide'}" class="card-img">
-        <div class="card-body">
-          <div class="card-title">${v.name || 'พูลวิลล่า'}</div>
-          <div class="card-meta"><span>📍 ${v.zone}</span> | <span>🛏️ ${v.beds} ห้องนอน</span></div>
-          <div class="price-section">
-            <div><div style="font-size:12px; color:#999;">ราคาเริ่มต้น</div><div class="price-value">${displayPrice}<span style="font-size:14px;"> ฿/คืน</span></div></div>
-          </div>
-          <a href="${v.link || '#'}" target="_blank" class="btn-details">🔗 ดูรายละเอียด/จองที่นี่</a>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  }
-</script>
-</body>
-</html>
+<script
