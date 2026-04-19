@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>จัดการพูลวิลล่า - Tiewnaide</title>
   <style>
-    /* CSS จัดการความสวยงาม */
+    /* จัดรูปแบบหน้าจอตามรูปถ่ายหน้าจอที่คุณส่งมา */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; color: #333; }
     
@@ -26,7 +26,6 @@
     .btn-edit { background: #2980b9; color: white; flex: 1; }
     .btn-delete { background: #e74c3c; color: white; width: 45px; }
     
-    /* Modal หน้าต่างแก้ไข */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
     .modal.show { display: flex; }
     .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
@@ -93,14 +92,13 @@
   let villas = [];
   let tempImage = null;
 
-  // ดึงข้อมูล Real-time จาก Firebase
   db.collection("villas").onSnapshot((snapshot) => {
     villas = [];
-    snapshot.forEach(doc => {
-      villas.push(doc.data());
-    });
+    snapshot.forEach(doc => villas.push(doc.data()));
     document.getElementById('status').textContent = `✅ ออนไลน์ (${villas.length} หลัง)`;
     render();
+  }, (error) => {
+    document.getElementById('status').textContent = '❌ เกิดข้อผิดพลาด: ' + error.message;
   });
 
   function render() {
@@ -147,14 +145,69 @@
 
   function showModal(v, isAdd) {
     tempImage = v.image;
-    const modal = document.getElementById('editModal');
     const content = document.getElementById('formContent');
-    
     content.innerHTML = `
       <h2 style="margin-bottom:20px;">${isAdd ? '➕ เพิ่มวิลล่าใหม่' : '✏️ แก้ไขข้อมูล'}</h2>
-      
       <div class="preview-box">
         <div id="pImg">${tempImage ? `<img src="${tempImage}" style="width:100%; max-height:150px; object-fit:cover; border-radius:5px;">` : '🏠 ไม่มีรูปภาพ'}</div>
         <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
           <button type="button" class="btn" style="background:#3498db; color:white; font-size:12px;" onclick="document.getElementById('fileIn').click()">📸 เลือกรูป</button>
-          <button type="button" class="btn" style="background:#95a5a6; color:white; font-size:1
+          <button type="button" class="btn" style="background:#95a5a6; color:white; font-size:12px;" onclick="removeImg()">🗑️ ลบรูป</button>
+        </div>
+        <input type="file" id="fileIn" style="display:none" accept="image/*" onchange="handleFile(this)">
+      </div>
+      <div class="form-row"><label class="form-label">ชื่อบ้านพัก</label><input id="fName" class="form-input" value="${v.name || ''}"></div>
+      <div class="form-row"><label class="form-label">โซน</label>
+        <select id="fZone" class="form-input">
+          <option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option>
+          <option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="form-label">🛏️ จำนวนห้องนอน</label><input id="fBeds" type="number" class="form-input" value="${v.beds || 3}"></div>
+      <div class="form-row"><label class="form-label">🔗 Link</label><input id="fLink" class="form-input" value="${v.link || ''}" placeholder="วางลิงก์ที่นี่"></div>
+      <div class="form-row"><label class="form-label">💰 ราคาขาย (หน้าเว็บ)</label><input id="fPrice" type="number" class="form-input" value="${v.customerPrice || 0}"></div>
+      <button class="btn" style="width:100%; background:#27ae60; color:white; padding:15px; font-size:16px; margin-top:10px;" onclick="saveVilla('${v.id}')">💾 บันทึกข้อมูล</button>
+      <button class="btn" style="width:100%; margin-top:10px; background:#ddd;" onclick="closeModal()">ยกเลิก</button>
+    `;
+    document.getElementById('editModal').classList.add('show');
+  }
+
+  function handleFile(input) {
+    const file = input.files[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { alert('รูปใหญ่เกินไปครับ (จำกัด 1MB)'); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        tempImage = e.target.result;
+        document.getElementById('pImg').innerHTML = `<img src="${tempImage}" style="width:100%; max-height:150px; object-fit:cover; border-radius:5px;">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeImg() { tempImage = null; document.getElementById('pImg').innerHTML = '🏠 ไม่มีรูปภาพ'; }
+
+  async function saveVilla(id) {
+    const data = {
+      id: id,
+      name: document.getElementById('fName').value,
+      link: document.getElementById('fLink').value,
+      customerPrice: parseInt(document.getElementById('fPrice').value) || 0,
+      beds: parseInt(document.getElementById('fBeds').value) || 0,
+      zone: document.getElementById('fZone').value,
+      image: tempImage,
+      location: document.getElementById('fZone').value
+    };
+    await db.collection("villas").doc(id).set(data);
+    closeModal();
+    alert('บันทึกเรียบร้อยครับ!');
+  }
+
+  async function deleteVilla(id) {
+    if(confirm('ยืนยันการลบบ้านรหัส ' + id + ' ?')) { await db.collection("villas").doc(id).delete(); }
+  }
+
+  function closeModal() { document.getElementById('editModal').classList.remove('show'); }
+</script>
+</body>
+</html>
