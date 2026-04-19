@@ -1,239 +1,35 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pool Villa Manager Pro + Firebase</title>
-  <style>
-    /* CSS เดิมของคุณนิวทั้งหมด */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
-    .header { background: #1a3a3a; color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .header h1 { font-size: 22px; }
-    .header-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn-top { padding: 10px 20px; background: #2d5a5a; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: 500; }
-    .btn-top:hover { background: #3d7a7a; }
-    .btn-reset { background: #e67e22; }
-    .btn-sync { background: #27ae60; }
-    .toolbar { background: white; padding: 1.5rem; border-bottom: 1px solid #eee; }
-    .toolbar-group { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-    .search-input { flex: 1; min-width: 250px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 5px; }
-    .filter-select { padding: 10px 12px; border: 1px solid #ddd; border-radius: 5px; background: white; font-size: 14px; }
-    .container { max-width: 1600px; margin: 0 auto; padding: 2rem 1rem; display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
-    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
-    .card { background: white; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s; }
-    .card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-    .card-img { width: 100%; height: 170px; background: linear-gradient(135deg, #ccc 0%, #999 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-    .card-img img { width: 100%; height: 100%; object-fit: cover; }
-    .card-img-emoji { font-size: 50px; }
-    .price-badge { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 2; }
-    .img-buttons { position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; gap: 6px; z-index: 3; }
-    .img-btn { flex: 1; padding: 6px 10px; background: rgba(255,255,255,0.95); border: none; border-radius: 5px; cursor: pointer; font-weight: 500; font-size: 12px; }
-    .img-btn.danger { background: rgba(231,76,60,0.95); color: white; }
-    .card-body { padding: 1.2rem; }
-    .card-id { font-size: 11px; color: #999; margin-bottom: 4px; font-weight: 600; }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-    .card-info { font-size: 13px; color: #666; }
-    .info-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .info-label { font-weight: 500; }
-    .info-value { color: #e74c3c; font-weight: 500; }
-    .card-actions { display: flex; gap: 8px; padding: 0 1.2rem 1.2rem; border-top: 1px solid #f0f0f0; padding-top: 1rem; }
-    .btn-card { flex: 1; padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 5px; cursor: pointer; font-weight: 500; font-size: 12px; }
-    .btn-edit { background: #3498db; color: white; border-color: #3498db; }
-    .btn-del { background: #e74c3c; color: white; border-color: #e74c3c; }
-    .sidebar { position: sticky; top: 2rem; height: fit-content; }
-    .sidebar-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-    .sidebar-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
-    .stat { background: #f9f9f9; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid #e74c3c; }
-    .stat-label { font-size: 11px; color: #999; text-transform: uppercase; }
-    .stat-value { font-size: 26px; font-weight: 700; color: #1a3a3a; margin-top: 3px; }
-    .sync-status { background: #e8f5e9; border-left: 4px solid #27ae60; padding: 10px; border-radius: 5px; font-size: 12px; color: #2d5a2d; font-weight: 500; margin-bottom: 1rem; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal.show { display: flex; }
-    .modal-content { background: white; border-radius: 10px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; }
-    .form-row { margin-bottom: 1rem; }
-    .form-label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
-    .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; font-family: inherit; }
-    .btn-group { display: flex; gap: 10px; margin-top: 1.5rem; }
-    .btn-save { flex: 1; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
-    .btn-cancel { flex: 1; padding: 12px; background: #ecf0f1; color: #333; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
-    .loading { text-align: center; padding: 40px; color: #999; grid-column: 1/-1; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: #e74c3c; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 10000; font-weight: 500; }
-    .toast.show { display: block; }
-  </style>
-</head>
-<body>
-
-<div class="header">
-  <h1>🏖️ Pool Villa Manager (Sync)</h1>
-  <div class="header-btns">
-    <button class="btn-top btn-sync" onclick="syncAllToFirebase()">🔄 Push All to Firebase</button>
-    <button class="btn-top btn-reset" onclick="resetToDefault()">Reset (Default)</button>
-    <button class="btn-top" onclick="openAddModal()">+ เพิ่มวิลล่า</button>
-  </div>
-</div>
-
-<div class="toolbar">
-  <div class="toolbar-group">
-    <input type="text" class="search-input" id="search" placeholder="🔍 ค้นหา..." oninput="render()">
-    <select class="filter-select" id="zoneFilter" onchange="render()">
-      <option value="">ทุกโซน</option>
-      <option value="พัทยา">พัทยา</option>
-      <option value="บางเสร่">บางเสร่</option>
-    </select>
-  </div>
-</div>
-
-<div class="container">
-  <div>
-    <div class="grid" id="grid">
-      <div class="loading"><div class="spinner"></div>เชื่อมต่อระบบ...</div>
-    </div>
-  </div>
-  
-  <aside class="sidebar">
-    <div class="sidebar-card">
-      <div class="sync-status" id="syncStatus">🔄 กำลังเชื่อมต่อ Firebase...</div>
-      <div class="sidebar-title">📊 สรุปรายการ</div>
-      <div class="stat"><div class="stat-label">รวมทั้งหมด</div><div class="stat-value" id="statTotal">0</div></div>
-      <div class="stat"><div class="stat-label">พัทยา</div><div class="stat-value" id="statPataya">0</div></div>
-      <div class="stat"><div class="stat-label">บางเสร่</div><div class="stat-value" id="statBangsarae">0</div></div>
-    </div>
-  </aside>
-</div>
-
-<div class="modal" id="editModal">
-  <div class="modal-content" id="formContent"></div>
-</div>
-<div class="toast" id="toast"></div>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAuI0m2sRMiyPsWeLZymklmku4DjyH-Etk",
-  authDomain: "pool-villa-sync.firebaseapp.com",
-  projectId: "pool-villa-sync",
-  storageBucket: "pool-villa-sync.firebasestorage.app",
-  messagingSenderId: "82378845389",
-  appId: "1:82378845389:web:2dbd9d153cf74cf0a78d84"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-let villas = [];
-let currentEditId = null;
-
-// ดึงข้อมูล Real-time จาก Firebase
-db.collection("villas").onSnapshot((snapshot) => {
-  villas = [];
-  snapshot.forEach(doc => villas.push(doc.data()));
-  if (villas.length === 0) {
-      document.getElementById('syncStatus').textContent = '⚠️ ไม่มีข้อมูลใน Firebase (กรุณากด Push All)';
-  } else {
-      document.getElementById('syncStatus').textContent = '✅ เชื่อมต่อ Firebase สำเร็จ (' + villas.length + ')';
-  }
-  render();
-}, (err) => {
-  console.error("Firebase Error:", err);
-  document.getElementById('syncStatus').textContent = '❌ เชื่อมต่อผิดพลาด: ' + err.message;
-});
-
-function render() {
-  const search = document.getElementById('search').value.toLowerCase();
-  const zone = document.getElementById('zoneFilter').value;
-  
-  let filtered = villas.filter(v => {
-    const matchSearch = v.name.toLowerCase().includes(search) || v.id.toLowerCase().includes(search);
-    const matchZone = !zone || v.zone === zone;
-    return matchSearch && matchZone;
-  });
-
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  
-  filtered.forEach(v => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-img">
-        <div class="price-badge">${(v.customerPrice || v.price).toLocaleString()}฿</div>
-        ${v.image ? `<img src="${v.image}">` : `<div class="card-img-emoji">🏠</div>`}
-        <div class="img-buttons">
-            <button class="img-btn" onclick="uploadImage('${v.id}')">📷 รูป</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="card-id">${v.id}</div>
-        <div class="card-title">${v.name}</div>
-        <div class="card-info">
-          <div class="info-item"><span class="info-label">โซน</span><span class="info-value">${v.zone}</span></div>
-          <div class="info-item"><span class="info-label">ห้องนอน</span><span class="info-value">${v.beds}</span></div>
-        </div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-card btn-edit" onclick="openEditModal('${v.id}')">✏️ แก้ไข</button>
-        <button class="btn-card btn-del" onclick="deleteVilla('${v.id}')">🗑️</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-
-  document.getElementById('statTotal').textContent = villas.length;
-  document.getElementById('statPataya').textContent = villas.filter(v => v.zone === 'พัทยา').length;
-  document.getElementById('statBangsarae').textContent = villas.filter(v => v.zone === 'บางเสร่').length;
-}
-
-// บันทึก/แก้ไข ลง Firebase ทันที
-async function saveToFirebase(villa) {
-  try {
-    await db.collection("villas").doc(villa.id).set(villa);
-    showToast("✓ บันทึกสำเร็จ");
-  } catch (e) {
-    showToast("❌ ผิดพลาด: " + e.message, "error");
-  }
-}
-
-async function deleteVilla(id) {
-  if (!confirm('ลบวิลล่ารหัส ' + id + '?')) return;
-  await db.collection("villas").doc(id).delete();
-  showToast("✓ ลบสำเร็จ");
-}
-
-function openEditModal(id) {
-  currentEditId = id;
-  const v = villas.find(x => x.id === id);
-  showModal(v, false);
-}
-
-function openAddModal() {
-  currentEditId = null;
-  const newId = "DV-" + Math.floor(1000 + Math.random() * 9000);
-  showModal({id: newId, name: '', zone: 'พัทยา', beds: 3, price: 5000, customerPrice: 7000, location: '', pets: '', link: ''}, true);
-}
-
 function showModal(v, isAdd) {
   const content = document.getElementById('formContent');
   content.innerHTML = `
-    <div class="modal-title">${isAdd ? 'เพิ่มวิลล่า' : 'แก้ไขวิลล่า'}</div>
-    <div class="form-row"><label class="form-label">ID</label><input id="fId" class="form-input" value="${v.id}" ${isAdd ? '' : 'disabled'}></div>
-    <div class="form-row"><label class="form-label">ชื่อบ้าน</label><input id="fName" class="form-input" value="${v.name}"></div>
-    <div class="form-row"><label class="form-label">โซน</label><select id="fZone" class="form-input"><option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option><option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option></select></div>
-    <div class="form-row"><label class="form-label">ห้องนอน</label><input id="fBeds" type="number" class="form-input" value="${v.beds}"></div>
-    <div class="form-row"><label class="form-label">ราคาจริง</label><input id="fPrice" type="number" class="form-input" value="${v.price}"></div>
-    <div class="form-row"><label class="form-label">ราคาขาย</label><input id="fCPrice" type="number" class="form-input" value="${v.customerPrice}"></div>
+    <div class="modal-title" style="font-size:18px; font-weight:700; margin-bottom:15px; color:#1a3a3a;">
+      ${isAdd ? '➕ เพิ่มวิลล่าใหม่' : '✏️ แก้ไขข้อมูลวิลล่า'}
+    </div>
+    <div class="form-row"><label class="form-label">รหัส (ID)</label><input id="fId" class="form-input" value="${v.id}" ${isAdd ? '' : 'disabled'}></div>
+    <div class="form-row"><label class="form-label">ชื่อบ้านพัก</label><input id="fName" class="form-input" value="${v.name || ''}"></div>
+    <div class="form-row">
+      <label class="form-label">โซน</label>
+      <select id="fZone" class="form-input">
+        <option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option>
+        <option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">จำนวนห้องนอน</label><input id="fBeds" type="number" class="form-input" value="${v.beds || 0}"></div>
+    <div class="form-row"><label class="form-label">ราคาจริง (หลังบ้าน)</label><input id="fPrice" type="number" class="form-input" value="${v.price || 0}"></div>
+    <div class="form-row"><label class="form-label">ราคาขาย (หน้าเว็บ)</label><input id="fCPrice" type="number" class="form-input" value="${v.customerPrice || 0}"></div>
+    
+    <div class="form-row"><label class="form-label">📍 ที่ตั้ง/พิกัด (Google Maps)</label><input id="fLoc" class="form-input" value="${v.location || ''}" placeholder="เช่น พัทยาใต้ ซอย 5"></div>
+    <div class="form-row"><label class="form-label">🔗 ลิงก์รายละเอียดบ้าน</label><input id="fLink" class="form-input" value="${v.link || ''}" placeholder="ใส่ลิงก์ Facebook หรือ Line"></div>
+    <div class="form-row"><label class="form-label">🐾 นโยบายสัตว์เลี้ยง</label><input id="fPets" class="form-input" value="${v.pets || ''}" placeholder="เช่น รับสุนัขพันธุ์เล็ก"></div>
+
     <div class="btn-group">
-      <button class="btn-save" onclick="handleSave(${isAdd})">บันทึก</button>
+      <button class="btn-save" onclick="handleSave(${isAdd})">💾 บันทึกข้อมูล</button>
       <button class="btn-cancel" onclick="document.getElementById('editModal').classList.remove('show')">ยกเลิก</button>
     </div>
   `;
   document.getElementById('editModal').classList.add('show');
 }
 
+// และอย่าลืมแก้ตรง handleSave ให้เก็บค่าใหม่ด้วยนะครับ
 async function handleSave(isAdd) {
   const villa = {
     id: document.getElementById('fId').value,
@@ -242,42 +38,11 @@ async function handleSave(isAdd) {
     beds: parseInt(document.getElementById('fBeds').value),
     price: parseInt(document.getElementById('fPrice').value),
     customerPrice: parseInt(document.getElementById('fCPrice').value),
-    image: isAdd ? null : villas.find(x => x.id === currentEditId).image,
-    location: '', pets: '', link: ''
+    location: document.getElementById('fLoc').value, // เก็บค่าที่ตั้ง
+    link: document.getElementById('fLink').value,     // เก็บค่าลิงก์
+    pets: document.getElementById('fPets').value,    // เก็บค่าสัตว์เลี้ยง
+    image: isAdd ? null : villas.find(x => x.id === currentEditId).image
   };
   await saveToFirebase(villa);
   document.getElementById('editModal').classList.remove('show');
 }
-
-function uploadImage(id) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = e => {
-    const reader = new FileReader();
-    reader.onload = async ev => {
-      const v = villas.find(x => x.id === id);
-      v.image = ev.target.result;
-      await saveToFirebase(v);
-    };
-    reader.readAsDataURL(e.target.files[0]);
-  };
-  input.click();
-}
-
-function showToast(m, type) {
-  const t = document.getElementById('toast');
-  t.textContent = m;
-  t.className = 'toast show ' + (type || '');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ฟังค์ชั่นพิเศษสำหรับ Push ข้อมูลตั้งต้น 105 หลังขึ้น Firebase ทีเดียว
-async function syncAllToFirebase() {
-    if (!confirm('ยืนยัน Push ข้อมูลทั้งหมดขึ้น Firebase?')) return;
-    // นำรายชื่อจาก defaultVillas มาวนลูปบันทึก
-    alert('กำลังดำเนินการ... กรุณารอสักครู่');
-}
-</script>
-</body>
-</html>
