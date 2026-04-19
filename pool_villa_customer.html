@@ -1,30 +1,45 @@
-filtered.forEach(v => {
-    const card = document.createElement('div');
-    card.className = 'card';
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏖️ เที่ยวไหนดี พูลวิลล่า - ค้นหาบ้านพักราคาดีที่สุด</title>
+  <style>
+    /* เน้นดีไซน์ที่สะอาดตาและราคาที่โดดเด่น */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f8fafc; color: #334155; }
     
-    // พอกดที่ตัว Card ให้ลิงก์ไปที่หน้าบ้านพักทันที
-    card.onclick = () => {
-      if (v.link) {
-        window.open(v.link, '_blank');
-      } else {
-        alert('บ้านหลังนี้ยังไม่ได้ลงลิงก์รายละเอียดครับ');
-      }
-    };
+    .header { background: linear-gradient(135deg, #1a3a3a 0%, #2d5a5a 100%); color: white; padding: 3.5rem 1.5rem; text-align: center; }
+    .header h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+    
+    /* แถบฟิลเตอร์ */
+    .filter-bar { background: white; padding: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .filter-select { padding: 12px 20px; border: 1.5px solid #e2e8f0; border-radius: 50px; outline: none; background: #fff; cursor: pointer; font-weight: 600; color: #1e293b; }
 
-    card.innerHTML = `
-      <div class="card-img">
-        <div class="price-badge">${(v.customerPrice || v.price).toLocaleString()}฿</div>
-        ${v.image ? `<img src="${v.image}">` : '🏠'}
-      </div>
-      <div class="card-body">
-        <div class="card-title">${v.name}</div>
-        <div class="info-item"><span>โซน</span><span class="info-value">${v.zone}</span></div>
-        <div class="info-item"><span>ห้องนอน</span><span class="info-value">${v.beds} ห้อง</span></div>
-        <div class="info-item"><span>ที่ตั้ง</span><span class="info-value">${v.location || '-'}</span></div>
-        <div style="margin-top:10px; text-align:center; color:#3498db; font-size:14px; font-weight:bold;">
-           ${v.link ? '🔗 กดดูรายละเอียดเพิ่มเติม' : ''}
-        </div>
-      </div>
-    `;
-    grid.appendChild(card);
-});
+    .container { max-width: 1300px; margin: 40px auto; padding: 0 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+    
+    .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; position: relative; }
+    .card:hover { transform: translateY(-12px); box-shadow: 0 20px 35px rgba(0,0,0,0.1); }
+    
+    .card-img { width: 100%; height: 220px; object-fit: cover; background: #f1f5f9; }
+    
+    /* ป้ายราคาที่แสดงบนรูป */
+    .price-badge { position: absolute; top: 20px; right: 20px; background: rgba(231, 76, 60, 0.95); color: white; padding: 8px 15px; border-radius: 30px; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+    .card-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+    .card-title { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 12px; line-height: 1.3; }
+    
+    .card-meta { display: flex; gap: 15px; font-size: 14px; color: #64748b; margin-bottom: 20px; }
+    .meta-item { display: flex; align-items: center; gap: 5px; }
+
+    /* ส่วนแสดงราคาด้านล่าง */
+    .price-section { margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .price-label { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .price-value { color: #e11d48; font-size: 28px; font-weight: 900; }
+    .price-unit { font-size: 14px; font-weight: 500; color: #64748b; margin-left: 2px; }
+    
+    .btn-details { display: block; width: 100%; padding: 15px; background: #1a3a3a; color: white; text-align: center; text-decoration: none; border-radius: 12px; font-weight: 700; margin-top: 20px; transition: 0.3s; }
+    .btn-details:hover { background: #2d5a5a; }
+    
+    #status-msg { text-align: center; margin-bottom: 30px; font-weight:
