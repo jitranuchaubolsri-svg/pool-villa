@@ -1,48 +1,150 @@
-function showModal(v, isAdd) {
-  const content = document.getElementById('formContent');
-  content.innerHTML = `
-    <div class="modal-title" style="font-size:18px; font-weight:700; margin-bottom:15px; color:#1a3a3a;">
-      ${isAdd ? '➕ เพิ่มวิลล่าใหม่' : '✏️ แก้ไขข้อมูลวิลล่า'}
-    </div>
-    <div class="form-row"><label class="form-label">รหัส (ID)</label><input id="fId" class="form-input" value="${v.id}" ${isAdd ? '' : 'disabled'}></div>
-    <div class="form-row"><label class="form-label">ชื่อบ้านพัก</label><input id="fName" class="form-input" value="${v.name || ''}"></div>
-    <div class="form-row">
-      <label class="form-label">โซน</label>
-      <select id="fZone" class="form-input">
-        <option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option>
-        <option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option>
-      </select>
-    </div>
-    <div class="form-row"><label class="form-label">จำนวนห้องนอน</label><input id="fBeds" type="number" class="form-input" value="${v.beds || 0}"></div>
-    <div class="form-row"><label class="form-label">ราคาจริง (หลังบ้าน)</label><input id="fPrice" type="number" class="form-input" value="${v.price || 0}"></div>
-    <div class="form-row"><label class="form-label">ราคาขาย (หน้าเว็บ)</label><input id="fCPrice" type="number" class="form-input" value="${v.customerPrice || 0}"></div>
-    
-    <div class="form-row"><label class="form-label">📍 ที่ตั้ง/พิกัด (Google Maps)</label><input id="fLoc" class="form-input" value="${v.location || ''}" placeholder="เช่น พัทยาใต้ ซอย 5"></div>
-    <div class="form-row"><label class="form-label">🔗 ลิงก์รายละเอียดบ้าน</label><input id="fLink" class="form-input" value="${v.link || ''}" placeholder="ใส่ลิงก์ Facebook หรือ Line"></div>
-    <div class="form-row"><label class="form-label">🐾 นโยบายสัตว์เลี้ยง</label><input id="fPets" class="form-input" value="${v.pets || ''}" placeholder="เช่น รับสุนัขพันธุ์เล็ก"></div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pool Villa Manager (Sync)</title>
+    <style>
+        /* CSS จัดรูปแบบหน้าจอให้สวยงามและรองรับมือถือ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+        .header { background: #1a3a3a; color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-top { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #2980b9; transition: 0.3s; }
+        .btn-top:hover { background: #3498db; }
+        .btn-sync { background: #27ae60; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 20px; border: 1px solid #e1e4e8; }
+        .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: #1a3a3a; }
+        .price-text { color: #e74c3c; font-weight: bold; font-size: 1.1rem; }
+        
+        /* Modal หน้าต่างแก้ไขข้อมูล */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .form-row { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #555; }
+        .form-input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 15px; }
+        .btn-save { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-cancel { width: 100%; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
 
-    <div class="btn-group">
-      <button class="btn-save" onclick="handleSave(${isAdd})">💾 บันทึกข้อมูล</button>
-      <button class="btn-cancel" onclick="document.getElementById('editModal').classList.remove('show')">ยกเลิก</button>
+<div class="header">
+    <h1>🏠 จัดการพูลวิลล่า</h1>
+    <div class="header-btns">
+        <button class="btn-top btn-sync" onclick="syncAllToFirebase()">🔄 Push All</button>
+        <button class="btn-top" onclick="openAddModal()">+ เพิ่มวิลล่า</button>
     </div>
-  `;
-  document.getElementById('editModal').classList.add('show');
-}
+</div>
 
-// และอย่าลืมแก้ตรง handleSave ให้เก็บค่าใหม่ด้วยนะครับ
-async function handleSave(isAdd) {
-  const villa = {
-    id: document.getElementById('fId').value,
-    name: document.getElementById('fName').value,
-    zone: document.getElementById('fZone').value,
-    beds: parseInt(document.getElementById('fBeds').value),
-    price: parseInt(document.getElementById('fPrice').value),
-    customerPrice: parseInt(document.getElementById('fCPrice').value),
-    location: document.getElementById('fLoc').value, // เก็บค่าที่ตั้ง
-    link: document.getElementById('fLink').value,     // เก็บค่าลิงก์
-    pets: document.getElementById('fPets').value,    // เก็บค่าสัตว์เลี้ยง
-    image: isAdd ? null : villas.find(x => x.id === currentEditId).image
-  };
-  await saveToFirebase(villa);
-  document.getElementById('editModal').classList.remove('show');
-}
+<div class="container">
+    <div id="syncStatus" style="margin-bottom: 15px; color: #27ae60; font-weight: bold;"></div>
+    <div class="grid" id="grid">
+        <p style="text-align:center; grid-column: 1/-1;">กำลังโหลดข้อมูลจาก Firebase...</p>
+    </div>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-content" id="formContent"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+    // Config ของคุณนิว
+    const firebaseConfig = {
+        apiKey: "AIzaSyAuI0m2sRMiyPsWeLZymklmku4DjyH-Etk",
+        authDomain: "pool-villa-sync.firebaseapp.com",
+        projectId: "pool-villa-sync",
+        storageBucket: "pool-villa-sync.firebasestorage.app",
+        messagingSenderId: "82378845389",
+        appId: "1:82378845389:web:2dbd9d153cf74cf0a78d84"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let villas = [];
+
+    // ดึงข้อมูล Real-time
+    db.collection("villas").onSnapshot((snapshot) => {
+        villas = [];
+        snapshot.forEach(doc => villas.push(doc.data()));
+        document.getElementById('syncStatus').textContent = `✅ เชื่อมต่อ Firebase สำเร็จ (พบข้อมูล ${villas.length} หลัง)`;
+        render();
+    });
+
+    function render() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = villas.length ? '' : '<p style="text-align:center; grid-column: 1/-1;">ยังไม่มีข้อมูลในระบบ</p>';
+        villas.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-title">${v.name} (${v.id})</div>
+                <p>📍 ${v.location || 'ไม่มีพิกัด'}</p>
+                <p class="price-text">ราคาขาย: ${Number(v.customerPrice).toLocaleString()} ฿</p>
+                <div style="margin-top:15px; display:flex; gap:10px;">
+                    <button class="btn-top" style="flex:1" onclick="openEditModal('${v.id}')">✏️ แก้ไข</button>
+                    <button class="btn-top" style="flex:1; background:#e74c3c" onclick="deleteVilla('${v.id}')">🗑️ ลบ</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function openAddModal() {
+        const newId = "DV-" + Math.floor(1000 + Math.random() * 9000);
+        showModal({id: newId, name: '', zone: 'พัทยา', beds: 3, price: 0, customerPrice: 0, location: '', link: '', pets: ''}, true);
+    }
+
+    function openEditModal(id) {
+        const v = villas.find(x => x.id === id);
+        showModal(v, false);
+    }
+
+    function showModal(v, isAdd) {
+        const content = document.getElementById('formContent');
+        content.innerHTML = `
+            <h2 style="margin-bottom:20px;">${isAdd ? '➕ เพิ่มวิลล่าใหม่' : '✏️ แก้ไขข้อมูล'}</h2>
+            <div class="form-row"><label class="form-label">รหัส (ID)</label><input id="fId" class="form-input" value="${v.id}" ${isAdd ? '' : 'disabled'}></div>
+            <div class="form-row"><label class="form-label">ชื่อบ้านพัก</label><input id="fName" class="form-input" value="${v.name}"></div>
+            <div class="form-row"><label class="form-label">โซน</label>
+                <select id="fZone" class="form-input">
+                    <option value="พัทยา" ${v.zone==='พัทยา'?'selected':''}>พัทยา</option>
+                    <option value="บางเสร่" ${v.zone==='บางเสร่'?'selected':''}>บางเสร่</option>
+                </select>
+            </div>
+            <div class="form-row"><label class="form-label">📍 ที่ตั้ง/พิกัด</label><input id="fLoc" class="form-input" value="${v.location || ''}"></div>
+            <div class="form-row"><label class="form-label">🔗 ลิงก์รายละเอียด (FB/Line)</label><input id="fLink" class="form-input" value="${v.link || ''}"></div>
+            <div class="form-row"><label class="form-label">ราคาขาย</label><input id="fCPrice" type="number" class="form-input" value="${v.customerPrice}"></div>
+            <button class="btn-save" onclick="handleSave()">💾 บันทึกข้อมูลลง Firebase</button>
+            <button class="btn-cancel" onclick="document.getElementById('editModal').classList.remove('show')">ยกเลิก</button>
+        `;
+        document.getElementById('editModal').classList.add('show');
+    }
+
+    async function handleSave() {
+        const v = {
+            id: document.getElementById('fId').value,
+            name: document.getElementById('fName').value,
+            zone: document.getElementById('fZone').value,
+            location: document.getElementById('fLoc').value,
+            link: document.getElementById('fLink').value,
+            customerPrice: parseInt(document.getElementById('fCPrice').value) || 0,
+            beds: 3, price: 0, pets: '' 
+        };
+        await db.collection("villas").doc(v.id).set(v);
+        document.getElementById('editModal').classList.remove('show');
+    }
+
+    async function deleteVilla(id) {
+        if(confirm('ต้องการลบรหัส ' + id + '?')) {
+            await db.collection("villas").doc(id).delete();
+        }
+    }
+</script>
+</body>
+</html>
