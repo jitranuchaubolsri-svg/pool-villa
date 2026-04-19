@@ -3,34 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tiewnaide Manager - Fixed</title>
+  <title>เที่ยวไหนดี พูลวิลล่า - Manager</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; color: #333; }
-    .header { background: #1a3a3a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-    .filter-bar { background: white; padding: 15px 2rem; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .header { background: #1a3a3a; color: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .filter-bar { background: white; padding: 15px 2rem; display: flex; gap: 15px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
     .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
+    .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; display: flex; flex-direction: column; }
     .card-img { width: 100%; height: 180px; background: #eee; border-radius: 8px; object-fit: cover; margin-bottom: 12px; }
-    .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .btn-add { background: #27ae60; color: white; padding: 10px 20px; }
-    .btn-edit { background: #2980b9; color: white; width: 100%; margin-top: 10px; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    .btn-add { background: #27ae60; color: white; padding: 10px 25px; font-size: 16px; }
+    .btn-edit { background: #2980b9; color: white; flex: 1; margin-top: 10px; }
+    .btn-delete { background: #e74c3c; color: white; width: 45px; margin-top: 10px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
     .modal.show { display: flex; }
-    .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; }
-    .form-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+    .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .form-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🏠 Tiewnaide Manager</h1>
+  <h1>🏠 เที่ยวไหนดี พูลวิลล่า</h1>
   <button class="btn btn-add" onclick="openAdd()">+ เพิ่มบ้านใหม่</button>
 </div>
 
 <div class="filter-bar">
-  <div id="status" style="font-weight: bold; color: #27ae60;">✅ ระบบพร้อมใช้งาน (กดเพิ่มบ้านได้เลย)</div>
+  <span>🔍 โซน:</span>
+  <select id="filterZone" style="padding:8px; border-radius:5px;" onchange="render()">
+    <option value="ทั้งหมด">ทั้งหมด</option>
+    <option value="พัทยา">พัทยา</option>
+    <option value="บางเสร่">บางเสร่</option>
+    <option value="บ้านอำเภอ">บ้านอำเภอ</option>
+  </select>
+  <span>🛏️ ห้องนอน:</span>
+  <select id="filterBeds" style="padding:8px; border-radius:5px;" onchange="render()">
+    <option value="ทั้งหมด">ทั้งหมด</option>
+    <option value="1">1 ห้องนอน</option>
+    <option value="2">2 ห้องนอน</option>
+    <option value="3">3 ห้องนอน</option>
+    <option value="4">4 ห้องนอนขึ้นไป</option>
+  </select>
 </div>
 
 <div class="container">
@@ -39,12 +54,18 @@
 
 <div class="modal" id="editModal">
   <div class="modal-content">
-    <h2 id="modalTitle">เพิ่มบ้านใหม่</h2>
+    <h2 id="modalTitle" style="margin-bottom:15px;">เพิ่ม/แก้ไข ข้อมูลบ้าน</h2>
     <input type="text" id="fId" class="form-input" placeholder="รหัสบ้าน (เช่น DV-001)">
     <input type="text" id="fName" class="form-input" placeholder="ชื่อบ้านพัก">
-    <input type="number" id="fPrice" class="form-input" placeholder="ราคาขาย">
-    <button class="btn btn-add" style="width: 100%; margin-top: 15px;" onclick="saveVilla()">💾 บันทึกข้อมูล</button>
-    <button class="btn" style="width: 100%; margin-top: 10px; background:#ccc;" onclick="closeModal()">ยกเลิก</button>
+    <input type="number" id="fBeds" class="form-input" placeholder="จำนวนห้องนอน">
+    <input type="text" id="fLink" class="form-input" placeholder="ลิงก์รายละเอียดบ้าน">
+    <input type="number" id="fPrice" class="form-input" placeholder="ราคาขาย (หน้าเว็บ)">
+    <input type="text" id="fImage" class="form-input" placeholder="ลิงก์รูปภาพ (URL)">
+    
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button class="btn btn-add" style="flex:1;" onclick="saveVilla()">💾 บันทึกข้อมูล</button>
+      <button class="btn" style="background:#95a5a6; color:white;" onclick="closeModal()">ยกเลิก</button>
+    </div>
   </div>
 </div>
 
@@ -65,7 +86,6 @@
   const db = firebase.firestore();
   let villas = [];
 
-  // ดึงข้อมูลมาแสดงผล
   db.collection("villas").onSnapshot((snapshot) => {
     villas = [];
     snapshot.forEach(doc => villas.push(doc.data()));
@@ -74,15 +94,32 @@
 
   function render() {
     const grid = document.getElementById('grid');
+    const fZone = document.getElementById('filterZone').value;
+    const fBeds = document.getElementById('filterBeds').value;
     grid.innerHTML = '';
-    villas.forEach(v => {
+    
+    const filtered = villas.filter(v => {
+      const matchZone = fZone === 'ทั้งหมด' || v.zone === fZone;
+      const vBeds = parseInt(v.beds) || 0;
+      let matchBeds = true;
+      if (fBeds !== 'ทั้งหมด') {
+        matchBeds = (fBeds === '4' ? vBeds >= 4 : vBeds == parseInt(fBeds));
+      }
+      return matchZone && matchBeds;
+    });
+
+    filtered.forEach(v => {
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <div style="font-weight:bold;">${v.name || 'ไม่มีชื่อ'}</div>
-        <div style="font-size:12px; color:gray;">ID: ${v.id}</div>
-        <div style="color:red; font-weight:bold;">${Number(v.customerPrice).toLocaleString()} ฿</div>
-        <button class="btn btn-edit" onclick="openEdit('${v.id}')">✏️ แก้ไข</button>
+        <img src="${v.image || 'https://via.placeholder.com/300x180?text=No+Image'}" class="card-img">
+        <div style="font-weight:bold; font-size:18px;">${v.name || 'ไม่มีชื่อ'}</div>
+        <div style="font-size:13px; color:#666;">ID: ${v.id} | ${v.beds} ห้องนอน</div>
+        <div style="color:#e74c3c; font-weight:bold; margin-top:5px;">ราคา: ${Number(v.customerPrice || 0).toLocaleString()} ฿</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-edit" onclick="openEdit('${v.id}')">✏️ แก้ไข</button>
+          <button class="btn btn-delete" onclick="deleteVilla('${v.id}')">🗑️</button>
+        </div>
       `;
       grid.appendChild(card);
     });
@@ -91,24 +128,49 @@
   function openAdd() {
     document.getElementById('fId').value = '';
     document.getElementById('fName').value = '';
+    document.getElementById('fBeds').value = '';
+    document.getElementById('fLink').value = '';
     document.getElementById('fPrice').value = '';
+    document.getElementById('fImage').value = '';
     document.getElementById('editModal').classList.add('show');
+  }
+
+  function openEdit(id) {
+    const v = villas.find(x => x.id === id);
+    if (v) {
+      document.getElementById('fId').value = v.id;
+      document.getElementById('fName').value = v.name || '';
+      document.getElementById('fBeds').value = v.beds || '';
+      document.getElementById('fLink').value = v.link || '';
+      document.getElementById('fPrice').value = v.customerPrice || '';
+      document.getElementById('fImage').value = v.image || '';
+      document.getElementById('editModal').classList.add('show');
+    }
   }
 
   async function saveVilla() {
     const id = document.getElementById('fId').value;
+    if(!id) return alert("กรุณาใส่รหัสบ้าน");
     const data = {
       id: id,
       name: document.getElementById('fName').value,
-      customerPrice: parseInt(document.getElementById('fPrice').value) || 0
+      beds: parseInt(document.getElementById('fBeds').value) || 0,
+      link: document.getElementById('fLink').value,
+      customerPrice: parseInt(document.getElementById('fPrice').value) || 0,
+      image: document.getElementById('fImage').value,
+      zone: document.getElementById('filterZone').value === 'ทั้งหมด' ? 'พัทยา' : document.getElementById('filterZone').value
     };
-    if(!id) return alert("กรุณาใส่รหัสบ้าน");
     await db.collection("villas").doc(id).set(data, {merge: true});
     closeModal();
   }
 
+  async function deleteVilla(id) {
+    if(confirm('ต้องการลบรหัส ' + id + ' หรือไม่?')) {
+      await db.collection("villas").doc(id).delete();
+    }
+  }
+
   function closeModal() { document.getElementById('editModal').classList.remove('show'); }
 </script>
-
 </body>
 </html>
