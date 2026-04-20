@@ -92,13 +92,13 @@
       return matchZone && matchBeds;
     });
 
-   // ตรวจสอบว่าในฐานข้อมูลหลัก (สมมติชื่อตัวแปร data) มีข้อมูลไหม
+   // ตรวจสอบว่าในฐานข้อมูลหลัก มีข้อมูลไหม
 if (!villas || villas.length === 0) {
     grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #888;"><h3>กรุณารออัพเดตสักครู่</h3></div>';
     return;
 }
 
-// ถ้ามีข้อมูลในระบบ แต่ filter ออกมาแล้วไม่เหลืออะไรเลย (หาไม่เจอ)
+// ถ้ามีข้อมูลในระบบ แต่ filter หาไม่เจอ
 if (filtered.length === 0) {
     grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #888;"><h3>ไม่พบผลลัพธ์ที่ตรงกับตัวเลือกของคุณ</h3><p>ลองปรับการค้นหาใหม่อีกครั้ง</p></div>';
     return;
