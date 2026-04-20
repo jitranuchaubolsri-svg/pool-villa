@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏖️ Pool Villa - ค้นหาบ้านพัก</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebee 100%); min-height: 100vh; }
+    
+    .header { background: linear-gradient(135deg, #1a3a3a 0%, #2d5a5a 100%); color: white; padding: 2.5rem 1.5rem; text-align: center; }
+    .header h1 { font-size: 32px; margin-bottom: 10px; }
+    .header p { font-size: 16px; opacity: 0.9; }
+    
+    .toolbar { background: white; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .toolbar-inner { max-width: 1400px; margin: 0 auto; display: flex; gap: 1rem; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 250px; padding: 12px 18px; border: 2px solid #eee; border-radius: 30px; font-size: 14px; }
+    .search-input:focus { outline: none; border-color: #e74c3c; }
+    .filter-select { padding: 12px 18px; border: 2px solid #eee; border-radius: 30px; font-size: 14px; background: white; cursor: pointer; }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; display: grid; grid-template-columns: 1fr 280px; gap: 2rem; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    
+    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: all 0.3s; cursor: pointer; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .card-img { width: 100%; height: 200px; background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .card-img-emoji { font-size: 70px; color: #999; }
+    .price-badge { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 8px 18px; border-radius: 25px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(231,76,60,0.5); z-index: 2; }
+    
+    .card-body { padding: 1.5rem; }
+    .card-id { font-size: 11px; color: #999; margin-bottom: 5px; font-weight: 600; }
+    .card-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #1a3a3a; }
+    .card-info { font-size: 13px; color: #666; }
+    .info-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .info-label { font-weight: 500; }
+    .info-value { color: #e74c3c; font-weight: 600; }
+    
+    .btn-detail { display: block; width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+    .btn-detail:hover { background: #229954; }
+    
+    .sidebar { position: sticky; top: 100px; height: fit-content; }
+    .sidebar-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+    .sidebar-title { font-size: 17px; font-weight: 700; margin-bottom: 1rem; color: #1a3a3a; }
+    .stat { background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #e74c3c; }
+    .stat-label { font-size: 11px; color: #999; text-transform: uppercase; }
+    .stat-value { font-size: 30px; font-weight: 800; color: #1a3a3a; margin-top: 3px; }
+    .sync-status { background: #e8f5e9; border-left: 4px solid #27ae60; padding: 10px; border-radius: 5px; font-size: 12px; color: #2d5a2d; margin-bottom: 1rem; font-weight: 500; }
+    
+    .loading { text-align: center; padding: 60px 20px; color: #999; grid-column: 1/-1; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: #e74c3c; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 60px 20px; color: #999; grid-column: 1/-1; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏖️ Pool Villa Pattaya</h1>
+  <p>ค้นหาบ้านพักสไตล์หรู พัทยา & บางเสร่</p>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <input type="text" class="search-input" id="search" placeholder="🔍 ค้นหาชื่อบ้าน หรือ ID..." oninput="filterData()">
+    <select class="filter-select" id="zoneFilter" onchange="filterData()">
+      <option value="">ทุกโซน</option>
+      <option value="พัทยา">พัทยา</option>
+      <option value="บางเสร่">บางเสร่</option>
+    </select>
+    <select class="filter-select" id="bedsFilter" onchange="filterData()">
+      <option value="">ทุกห้องนอน</option>
+      <option value="2">2 ห้อง</option>
+      <option value="3">3 ห้อง</option>
+      <option value="4">4 ห้อง</option>
+      <option value="5">5 ห้อง</option>
+      <option value="6">6 ห้อง</option>
+      <option value="7">7 ห้อง</option>
+      <option value="8+">8+ ห้อง</option>
+    </select>
+  </div>
+</div>
+
+<div class="container">
+  <div>
+    <div class="grid" id="grid">
+      <div class="loading"><div class="spinner"></div>กำลังโหลด...</div>
+    </div>
+  </div>
+  
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sync-status" id="syncStatus">🔄 เชื่อมต่อ Firebase...</div>
+      <div class="sidebar-title">📊 สรุป</div>
+      <div class="stat">
+        <div class="stat-label">รวมทั้งหมด</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">พัทยา</div>
+        <div class="stat-value" id="statPataya">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">บางเสร่</div>
+        <div class="stat-value" id="statBangsarae">0</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+<script>
+// Firebase Config
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAuI0m2sRMiyPsWeLZymklmku4DjyH-Etk",
+  authDomain: "pool-villa-sync.firebaseapp.com",
+  projectId: "pool-villa-sync",
+  storageBucket: "pool-villa-sync.firebasestorage.app",
+  messagingSenderId: "82378845389",
+  appId: "1:82378845389:web:2dbd9d153cf74cf0a78d84"
+};
+
+
+// Initialize Firebase
+var db = null;
+
+function tryInitFirebase() {
+  if (typeof firebase === 'undefined') {
+    console.log('Firebase SDK not loaded yet, retrying...');
+    setTimeout(tryInitFirebase, 200);
+    return;
+  }
+  
+  try {
+    var app = firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    console.log('✓ Firebase initialized');
+    listenToFirebase();
+  } catch(err) {
+    console.error('Firebase init:', err);
+    document.getElementById('syncStatus').textContent = '⚠️ Firebase ไม่ได้ - ใช้ข้อมูล Local';
+    villas = JSON.parse(JSON.stringify(defaultVillas));
+    render();
+  }
+}
+
+// Render local data ทันที (fallback ถ้า Firebase ช้า)
+setTimeout(function() {
+  if (villas.length === 0) {
+    villas = JSON.parse(JSON.stringify(defaultVillas));
+    document.getElementById('syncStatus').textContent = '🔄 ใช้ข้อมูล Local (รอ Firebase)';
+    render();
+  }
+}, 3000);
+
+tryInitFirebase();
+
+var villas = [];
+var defaultVillas = [
+  {
+    "id": "DV-2810",
+    "name": "Wasan",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2810",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2812",
+    "name": "Wasan3",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2812",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2696",
+    "name": "Cave house",
+    "location": "ตรงข้ามหาดกระทิงลาย",
+    "beds": 7,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2696/",
+    "price": 18500,
+    "customerPrice": 20000,
+    "image": null
+  },
+  {
+    "id": "DV-2666",
+    "name": "Classy house",
+    "location": "ตรงข้ามหาดนาเกลือ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/1576/2666/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2750",
+    "name": "Crop house",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/1576/2750/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2762",
+    "name": "Cayla house",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2762/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2758",
+    "name": "Castle house",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2758/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2580",
+    "name": "Florimond house",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2580/",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-1411",
+    "name": "แพลทินัม",
+    "location": "หาดบ้านอำเภอ",
+    "beds": 6,
+    "zone": "พัทยา",
+    "pets": "รับไซส์เล็ก-กลาง (400/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1411/",
+    "price": 15500,
+    "customerPrice": 17000,
+    "image": null
+  },
+  {
+    "id": "DV-136",
+    "name": "MARIN",
+    "location": "หาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300-500/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/136/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-137",
+    "name": "จัสติน",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/137/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-424",
+    "name": "คาโมมายล์",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/424/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-425",
+    "name": "ชอว์ตี้",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/425/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2805",
+    "name": "Alpha Fun Pool Villa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2805/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2620",
+    "name": "Mana Fun Pool Villa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2620/",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-2636",
+    "name": "Viva Fun Pool Villa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2636/",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-2788",
+    "name": "Prada Fun Pool Villa",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2788/",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-2321",
+    "name": "Sea’Cret Pattaya Pool Villa",
+    "location": "หาดบ้านอำเภอ",
+    "beds": 6,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2321",
+    "price": 15500,
+    "customerPrice": 17000,
+    "image": null
+  },
+  {
+    "id": "DV-2030",
+    "name": "Best Fun Pool Villa",
+    "location": "หาดจอมเทียน",
+    "beds": 6,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2030/",
+    "price": 15500,
+    "customerPrice": 17000,
+    "image": null
+  },
+  {
+    "id": "DV-1547",
+    "name": "Funny Time Pool villa",
+    "location": "หาดจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.devillegroups.com/v/1547/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-1458",
+    "name": "Shining House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/1458/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2687",
+    "name": "Swiss Home",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2687/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2343",
+    "name": "niffa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2343/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2586",
+    "name": "I LOVE U",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2586",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-769",
+    "name": "Garden House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/769",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1968",
+    "name": "Homey House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1968",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-16",
+    "name": "ฮอว์คอาย",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/16",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-124",
+    "name": "โคลเอ้",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/124",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-196",
+    "name": "ฟามิงโก้",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/196",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-214",
+    "name": "Gallery",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/214",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1678",
+    "name": "ภิรมย์",
+    "location": "(รอข้อมูล)",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "(รอ)",
+    "link": "https://www.devillegroups.com/v/1678/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2621",
+    "name": "ภิรมย์2",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว ไม่เกิน20กก.)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2621/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2709",
+    "name": "ภิรมย์3",
+    "location": "หาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว ไม่เกิน20กก.)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2709/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2934",
+    "name": "ภิรมย์4",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว ไม่เกิน10กก.)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2934",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2361",
+    "name": "ภิรมย์5",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 7,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว ไม่เกิน20กก.)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2361/",
+    "price": 18500,
+    "customerPrice": 20000,
+    "image": null
+  },
+  {
+    "id": "DV-738",
+    "name": "ภิรมย์6",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับพันธุ์เล็ก (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/738",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2435",
+    "name": "เคซี่",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว ไม่เกิน20กก.)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2435/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1724",
+    "name": "นภา",
+    "location": "ตรงข้ามหาดพัทยากลาง",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/1724/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1977",
+    "name": "Butter House",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1977/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2360",
+    "name": "Cyrus House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2360/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-1429",
+    "name": "Luca House",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1429/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2071",
+    "name": "Camel House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2071/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1608",
+    "name": "Charming House",
+    "location": "หาดพัทยาเหนือ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1608/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2390",
+    "name": "Lava House",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2390/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2434",
+    "name": "Magma House",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2434/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1597",
+    "name": "Planet House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1597/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1598",
+    "name": "Sunset House",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1598/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1952",
+    "name": "Terra House",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1952/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2314",
+    "name": "-",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2314/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-3047",
+    "name": "-",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/3047",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2326",
+    "name": "welcome Drink",
+    "location": "หาดจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2326",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-1846",
+    "name": "-",
+    "location": "หาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/3/1846",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1718",
+    "name": "-",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1718",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1676",
+    "name": "-",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1676",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-554",
+    "name": "-",
+    "location": "ตรงข้ามหาดพัทยาเหนือ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/554",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-785",
+    "name": "Breezy",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (ตัวเล็ก 300)",
+    "link": "https://www.pattayapartypoolvilla.com/v/785",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1902",
+    "name": "Merry poolvilla",
+    "location": "หาดจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1902/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-433",
+    "name": "Minimal",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/433/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-768",
+    "name": "Moana",
+    "location": "หาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/768/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2830",
+    "name": "-",
+    "location": "ตรงข้ามหาดสัตหีบ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2830/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2800",
+    "name": "-",
+    "location": "หาดจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.poolvillapattaya.co.th/v/2800/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-1813",
+    "name": "sky house",
+    "location": "หาดห้วยใหญ่",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1813/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2463",
+    "name": "Signature time pool villa",
+    "location": "หาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2463/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2442",
+    "name": "celesta poolvilla",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2442/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2901",
+    "name": "-",
+    "location": "หาดนาจอมเทีย",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2901/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2836",
+    "name": "-",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2836",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1961",
+    "name": "Miguel Pool Villa",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/1961/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2503",
+    "name": "Miguel 2 Pool Villa",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก 300/ใหญ่ 500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2503/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2428",
+    "name": "Miguel Plus Pool Villa",
+    "location": "ตรงข้ามหาดบ้านอำเภอ",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300-500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2428",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2528",
+    "name": "Céline Pool Villa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2528/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2581",
+    "name": "Bonheur Pool Villa",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (500/คืน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2581/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2911",
+    "name": "Dragon Pool Villa",
+    "location": "หาดจอมเทียน",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "รับ (แจ้งแอดมิน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2911",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-551",
+    "name": "Sunshine 1 (PM1)",
+    "location": "ตรงข้ามหาดพัทยาเหนือ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก 300/ใหญ่ 500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/551",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2577",
+    "name": "Sunshine 2 (PM2)",
+    "location": "หาดกระทิงลาย",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับเฉพาะตัวเล็ก (300)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2577",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-3032",
+    "name": "Sunshine 3 (88)",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (เล็ก 300/ใหญ่ 500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/3032",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-3028",
+    "name": "Sunshine 4 (42)",
+    "location": "อ่างเก็บน้ำมาบประชัน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/3028",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-3041",
+    "name": "Sunshine 5(40)",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/3041",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2234",
+    "name": "Sunshine 6(Moon Roxy)",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับเฉพาะตัวเล็ก (300)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2234/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-3062",
+    "name": "Sunshine 7 (A98)",
+    "location": "ตรงข้ามหาดจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "รับ (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/3062",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2526",
+    "name": "-",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "สุนัข,แมว 300บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2526",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2701",
+    "name": "-",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "สุนัข เล็ก-กลาง 500บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2701",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-678",
+    "name": "Topical",
+    "location": "ตรงข้ามหาดกระทิงลาย",
+    "beds": 5,
+    "zone": "พัทยา",
+    "pets": "สัตว์เลี้ยง 300-500บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/678",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-2239",
+    "name": "Black-White",
+    "location": "ตรงข้ามหาดพัทยาเหนือ",
+    "beds": 3,
+    "zone": "พัทยา",
+    "pets": "สัตว์เลี้ยง เล็ก 300บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2239",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2594",
+    "name": "-",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "สุนัข,แมว 500บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2594",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2593",
+    "name": "-",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "สุนัข,แมว 500บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2593",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2822",
+    "name": "Sunflower Poolvilla",
+    "location": "ตรงข้ามหาดนาจอมเทียน",
+    "beds": 4,
+    "zone": "พัทยา",
+    "pets": "สุนัข เล็ก-กลาง 300บ/ตัว",
+    "link": "https://www.pattayapartypoolvilla.com/v/2822",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-1548",
+    "name": "Double Fun Pool villa",
+    "location": "หาดเขาพระตำหนัก",
+    "beds": 8,
+    "zone": "บางเสร่",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.devillegroups.com/v/1548/",
+    "price": 22000,
+    "customerPrice": 23500,
+    "image": null
+  },
+  {
+    "id": "DV-1945",
+    "name": "Fun Beach Pool Villa",
+    "location": "หาดบางเสร่",
+    "beds": 5,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/1945/",
+    "price": 12500,
+    "customerPrice": 14000,
+    "image": null
+  },
+  {
+    "id": "DV-2224",
+    "name": "Sea Of Fun Pool Villa",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2224",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2322",
+    "name": "Ocean Fun Pool Villa",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "รับ (เล็ก300/ใหญ่500)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2322/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-1562",
+    "name": "-",
+    "location": "หาดบางเสร่",
+    "beds": 2,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/1562/",
+    "price": 3500,
+    "customerPrice": 5000,
+    "image": null
+  },
+  {
+    "id": "DV-2305",
+    "name": "-",
+    "location": "หาดบางเสร่",
+    "beds": 2,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2305/",
+    "price": 3500,
+    "customerPrice": 5000,
+    "image": null
+  },
+  {
+    "id": "DV-2399",
+    "name": "Cool Cool",
+    "location": "หาดบางเสร่",
+    "beds": 4,
+    "zone": "บางเสร่",
+    "pets": "รับพันธุ์เล็ก (300)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2399",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2307",
+    "name": "Cha Cha 1",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 6,
+    "zone": "บางเสร่",
+    "pets": "รับ (สอบถามแอดมิน)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2307",
+    "price": 15500,
+    "customerPrice": 17000,
+    "image": null
+  },
+  {
+    "id": "DV-2337",
+    "name": "Cha Cha 2",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 2,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2337",
+    "price": 3500,
+    "customerPrice": 5000,
+    "image": null
+  },
+  {
+    "id": "DV-2340",
+    "name": "Cha Cha 3",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2340",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2342",
+    "name": "Cha Cha 4",
+    "location": "หาดกระทิงลาย",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2342",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2341",
+    "name": "Cha Cha 5",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2341",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2202",
+    "name": "The Palm",
+    "location": "หาดบางเสร่",
+    "beds": 4,
+    "zone": "บางเสร่",
+    "pets": "รับ (300/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2202/",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  },
+  {
+    "id": "DV-2199",
+    "name": "Wanwi",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2199/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2370",
+    "name": "T&D",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2370/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2310",
+    "name": "Tukta",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2310/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2825",
+    "name": "Amount Hill 03",
+    "location": "ตรงข้ามหาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "รับ (300-500/ตัว)",
+    "link": "https://www.pattayapartypoolvilla.com/v/2825/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2456",
+    "name": "The Nature",
+    "location": "หาดบางเสร่",
+    "beds": 3,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับ",
+    "link": "https://www.pattayapartypoolvilla.com/v/2456/",
+    "price": 5500,
+    "customerPrice": 7000,
+    "image": null
+  },
+  {
+    "id": "DV-2830",
+    "name": "Merci Poolvilla",
+    "location": "ตรงข้ามหาดสัตหีบ",
+    "beds": 4,
+    "zone": "บางเสร่",
+    "pets": "ไม่รับสัตว์เลี้ยง",
+    "link": "https://www.pattayapartypoolvilla.com/v/2830",
+    "price": 8500,
+    "customerPrice": 10000,
+    "image": null
+  }
+];
+
+// Real-time listener
+function listenToFirebase() {
+  if (!db) {
+    document.getElementById('syncStatus').textContent = '❌ Firebase ไม่พร้อม';
+    villas = JSON.parse(JSON.stringify(defaultVillas));
+    render();
+    return;
+  }
+  
+  document.getElementById('syncStatus').textContent = '🔄 เชื่อมต่อ Firebase...';
+  
+  db.collection('villas').onSnapshot(
+    function(snapshot) {
+      if (snapshot.size === 0) {
+        document.getElementById('syncStatus').textContent = '⏳ ยังไม่มีข้อมูล Firebase';
+        villas = JSON.parse(JSON.stringify(defaultVillas));
+      } else {
+        villas = [];
+        snapshot.forEach(function(doc) {
+          villas.push(doc.data());
+        });
+        document.getElementById('syncStatus').textContent = '✓ Real-time sync (' + villas.length + ' หลัง)';
+      }
+      render();
+    },
+    function(error) {
+      console.error('Firestore error:', error);
+      document.getElementById('syncStatus').textContent = '❌ Sync ไม่ได้';
+      villas = JSON.parse(JSON.stringify(defaultVillas));
+      render();
+    }
+  );
+}
+
+function render() {
+  updateStats();
+  filterData();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = villas.length;
+  document.getElementById('statPataya').textContent = villas.filter(function(v) { return v.zone === 'พัทยา'; }).length;
+  document.getElementById('statBangsarae').textContent = villas.filter(function(v) { return v.zone === 'บางเสร่'; }).length;
+}
+
+function filterData() {
+  var search = document.getElementById('search').value.toLowerCase();
+  var zone = document.getElementById('zoneFilter').value;
+  var beds = document.getElementById('bedsFilter').value;
+  
+  var filtered = villas.slice();
+  if (search) {
+    filtered = filtered.filter(function(v) {
+      return (v.name || '').toLowerCase().indexOf(search) !== -1 || (v.id || '').toLowerCase().indexOf(search) !== -1;
+    });
+  }
+  if (zone) filtered = filtered.filter(function(v) { return v.zone === zone; });
+  if (beds) {
+    if (beds === '8+') filtered = filtered.filter(function(v) { return v.beds >= 8; });
+    else filtered = filtered.filter(function(v) { return v.beds === parseInt(beds); });
+  }
+  
+  var grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = '🔍 ไม่พบบ้านที่ค้นหา';
+    grid.appendChild(empty);
+    return;
+  }
+  
+  filtered.forEach(function(v) { grid.appendChild(createCard(v)); });
+}
+
+function createCard(v) {
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.onclick = function() { window.open(v.link, '_blank'); };
+  
+  var imgDiv = document.createElement('div');
+  imgDiv.className = 'card-img';
+  
+  var priceBadge = document.createElement('div');
+  priceBadge.className = 'price-badge';
+  priceBadge.textContent = (v.customerPrice || v.price || 0).toLocaleString() + '฿/คืน';
+  imgDiv.appendChild(priceBadge);
+  
+  if (v.image && v.image.length > 10) {
+    var img = document.createElement('img');
+    img.src = v.image;
+    img.alt = v.name || '';
+    img.onerror = function() { this.style.display = 'none'; };
+    imgDiv.appendChild(img);
+  } else {
+    var emoji = document.createElement('div');
+    emoji.className = 'card-img-emoji';
+    emoji.textContent = '🏠';
+    imgDiv.appendChild(emoji);
+  }
+  
+  card.appendChild(imgDiv);
+  
+  var body = document.createElement('div');
+  body.className = 'card-body';
+  body.innerHTML = 
+    '<div class="card-id">' + escapeHtml(v.id) + '</div>' +
+    '<div class="card-title">' + escapeHtml(v.name || '-') + '</div>' +
+    '<div class="card-info">' +
+      '<div class="info-item"><span class="info-label">โซน</span><span class="info-value">' + escapeHtml(v.zone || '') + '</span></div>' +
+      '<div class="info-item"><span class="info-label">ห้องนอน</span><span class="info-value">' + v.beds + ' ห้อง</span></div>' +
+      '<div class="info-item"><span class="info-label">ที่ตั้ง</span><span class="info-value" style="font-size:12px;">' + escapeHtml(v.location || '-') + '</span></div>' +
+      '<div class="info-item"><span class="info-label">สัตว์เลี้ยง</span><span class="info-value" style="font-size:12px;">' + escapeHtml(v.pets || '-') + '</span></div>' +
+    '</div>' +
+    '<button class="btn-detail">🔗 ดูรายละเอียด</button>';
+  card.appendChild(body);
+  
+  return card;
+}
+
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// listenToFirebase() is called inside async init block above
+</script>
+
+</body>
+</html>
