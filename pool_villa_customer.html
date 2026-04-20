@@ -106,12 +106,12 @@
         <div class="card-body">
           <div class="card-title">${v.name || 'บ้านพักพูลวิลล่า'}</div>
           <div class="card-info">
-            🆔 รหัส: ${v.id}<br>
+            รหัสบ้าน : ${v.id}<br>
             🛏️ จำนวน: ${v.beds} ห้องนอน
           </div>
           <div style="font-size: 12px; color: #888;">ราคาเริ่มต้น</div>
           <div class="price-tag">${Number(v.customerPrice || 0).toLocaleString()} ฿</div>
-          <a href="${v.link || '#'}" target="_blank" class="btn-link">กดดูรายละเอียด/จอง</a>
+          <a href="${v.link || '#'}" target="_blank" class="btn-link">กดดูรายละเอียด</a>
         </div>
       `;
       grid.appendChild(card);
